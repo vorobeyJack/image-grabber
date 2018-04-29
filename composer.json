@@ -1,0 +1,29 @@
+{
+  "name": "vrba/imager-grabber",
+  "description": "PHP library for parsing images from sites and save into local storage/Amazon S3 storage",
+  "keywords": [
+    "php",
+    "image",
+    "parser",
+    "grabber",
+    "s3"
+  ],
+  "type": "library",
+  "minimum-stability": "dev",
+  "authors": [
+    {
+      "name": "Evgenii Vorobey",
+      "email": "evgeniivorobey1404@gmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.1.0",
+    "guzzlehttp/guzzle": "^6.3",
+    "symfony/var-dumper": "^4.1@dev"
+  },
+  "autoload": {
+    "psr-4": {
+      "vrba\\App\\": "src/"
+    }
+  }
+}
