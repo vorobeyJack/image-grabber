@@ -91,7 +91,7 @@ class ImageManager
                 continue;
             }
 
-            $this->saveImageToLocalStorage($imageSrc);
+            $this->saveImageToLocalStorage($this->generateAbsoluteUrl($imageSrc));
         }
     }
 
@@ -127,7 +127,7 @@ class ImageManager
      */
     private function isImageCorrect(string $src): bool
     {
-        $imageType = exif_imagetype($src);
+        $imageType = exif_imagetype($this->generateAbsoluteUrl($src));
 
         return !empty($src) && in_array($imageType, [IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_BMP]);
     }
@@ -150,7 +150,7 @@ class ImageManager
 
         if (0 === strpos($src, '/')) {
             $resultPath = ltrim($src, '/');
-            $resultPath .= $this->scheme . '://';
+            $resultPath = $this->scheme . '://'. $resultPath;
         }
 
         return $resultPath;
