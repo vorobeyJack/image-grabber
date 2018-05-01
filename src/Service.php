@@ -3,6 +3,7 @@
 namespace vrba\App;
 
 use vrba\App\Exception\InvalidImageException;
+use vrba\App\Factory\ImageFactory;
 
 /**
  * Class Service
@@ -16,35 +17,54 @@ class Service
     private $host;
     private $directoryPath;
 
+    private $imageFactory;
+
     /**
      * Service constructor.
      *
      * @param string $url
      */
-    public function __construct(string $url)
+    public function __construct(string $url, ImageFactory $imageFactory)
     {
         $this->content = file_get_contents($url);
         $this->scheme = parse_url($url, PHP_URL_SCHEME);
         $this->host = parse_url($url, PHP_URL_HOST);
         $this->directoryPath = $this->makeImagesDirectory();
+
+        $this->imageFactory = $imageFactory;
     }
 
-    private function saveImageToLocalStorage()
+    /**
+     * Saves images into local storage.
+     *
+     * @param string $filePath
+     */
+    private function saveImageToLocalStorage(string $filePath)
     {
+        $imageName = $this->generateImageName($filePath);
+        $imageType = exif_imagetype($filePath);
+        $imagePath = $filePath . DIRECTORY_SEPARATOR . $imageName;
 
+        $this->imageFactory->createFromArray([
+            'path' => $imagePath,
+            'type' => $imageType,
+            'name' => $imageName,
+        ]);
     }
 
     /**
      * Creates images directory.
+     *
+     * @return string
      */
-    private function makeImagesDirectory() : void
+    private function makeImagesDirectory(): string
     {
         $path = __DIR__ . DIRECTORY_SEPARATOR . 'img';
         if (!file_exists($path)) {
             mkdir($path, 0777, true);
         }
 
-        $this->directoryPath = $path;
+        return $path;
     }
 
     /**
@@ -57,7 +77,7 @@ class Service
                 throw new InvalidImageException();
             }
 
-            //@todo
+            $this->saveImageToLocalStorage($img->src);
         }
     }
 
