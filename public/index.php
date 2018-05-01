@@ -2,4 +2,9 @@
 
 require '../vendor/autoload.php';
 
-$grabber = new \vrba\App\ImageManager('http');
+try{
+    $grabber = new \vrba\App\ImageManager('http');
+    dump($grabber);die;
+}catch (\Throwable $exception){
+    dump($exception);die;
+}
