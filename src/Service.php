@@ -26,14 +26,18 @@ class Service
         $this->content = file_get_contents($url);
         $this->scheme = parse_url($url, PHP_URL_SCHEME);
         $this->host = parse_url($url, PHP_URL_HOST);
+        $this->directoryPath = $this->makeImagesDirectory();
+    }
+
+    private function saveImageToLocalStorage()
+    {
+
     }
 
     /**
      * Creates images directory.
-     *
-     * @return Service
      */
-    private function makeImagesDirectory(): Service
+    private function makeImagesDirectory() : void
     {
         $path = __DIR__ . DIRECTORY_SEPARATOR . 'img';
         if (!file_exists($path)) {
@@ -41,8 +45,6 @@ class Service
         }
 
         $this->directoryPath = $path;
-
-        return $this;
     }
 
     /**
@@ -56,8 +58,18 @@ class Service
             }
 
             //@todo
-
         }
+    }
+
+    /**
+     * Generates image name.
+     *
+     * @param string $src
+     * @return string
+     */
+    private function generateImageName(string $src): string
+    {
+        return time() . '_' . pathinfo($src, PATHINFO_EXTENSION);
     }
 
     /**
@@ -68,8 +80,7 @@ class Service
      */
     private function isImageCorrect(string $src): bool
     {
-        $imageInfo = getimagesize($src);
-        $imageType = $imageInfo[2];
+        $imageType = exif_imagetype($src);
 
         return !empty($src) && in_array($imageType, [IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_BMP]);
     }
