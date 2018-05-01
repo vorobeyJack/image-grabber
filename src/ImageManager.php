@@ -13,7 +13,7 @@ use vrba\App\Factory\ImageFileFactory;
 class ImageManager
 {
     /**
-     * DOMDocument page content
+     * DOMDocument page content.
      *
      * @var bool
      */
@@ -26,7 +26,30 @@ class ImageManager
      */
     private $directoryPath;
 
+    /**
+     * Http/https scheme.
+     *
+     * @var string
+     */
     private $scheme;
+
+    /**
+     * Hostname.
+     *
+     * @var string
+     */
+    private $host;
+
+    /**
+     * Mapping for exif_imagetype function
+     */
+    private const IMAGE_EXTENSION_MAPPING = [
+        1 => 'gif',
+        2 => 'jpeg',
+        3 => 'png',
+        5 => 'psd',
+        6 => 'bmp',
+    ];
 
     /**
      * ImageManager constructor.
@@ -43,7 +66,7 @@ class ImageManager
         $this->directoryPath = $this->makeImagesDirectory();
         $this->domDocument = $this->init($url);
         $this->scheme = parse_url($url, PHP_URL_SCHEME);
-
+        $this->host = parse_url($url, PHP_URL_HOST);
     }
 
     /**
@@ -114,7 +137,7 @@ class ImageManager
      */
     private function generateImageName(string $src): string
     {
-        $imageNamePrefix = !empty(pathinfo($src, PATHINFO_EXTENSION)) ? pathinfo($src, PATHINFO_EXTENSION) : 'jpg';
+        $imageNamePrefix = !empty(pathinfo($src, PATHINFO_EXTENSION)) ? self::IMAGE_EXTENSION_MAPPING[exif_imagetype($src)] : 'jpg';
 
         return time() . '.' . $imageNamePrefix;
     }
@@ -127,18 +150,22 @@ class ImageManager
      */
     private function isImageCorrect(string $src): bool
     {
+        if (empty($src)) {
+            return false;
+        }
+
         $imageType = exif_imagetype($this->generateAbsoluteUrl($src));
 
-        return !empty($src) && in_array($imageType, [IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_BMP]);
+        return in_array($imageType, [IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_BMP]);
     }
 
     /**
      * Generates absolute url
      *
      * @param string $src
-     * @return string
+     * @return string|null
      */
-    private function generateAbsoluteUrl(string $src) : string
+    private function generateAbsoluteUrl(string $src): ?string
     {
         if ($this->isUrlCorrect($src)) {
             return $src;
@@ -150,7 +177,7 @@ class ImageManager
 
         if (0 === strpos($src, '/')) {
             $resultPath = ltrim($src, '/');
-            $resultPath = $this->scheme . '://'. $resultPath;
+            $resultPath = $this->scheme . '://' . $this->host .'/'. $resultPath;
         }
 
         return $resultPath;

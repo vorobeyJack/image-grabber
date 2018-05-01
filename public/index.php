@@ -3,7 +3,7 @@
 require '../vendor/autoload.php';
 
 try{
-    $grabber = new \vrba\App\ImageManager('https://habr.com/company/mailru/blog/115163');
+    $grabber = new \vrba\App\ImageManager('http://somelink');
     dump($grabber->parse());die;
 }catch (\Throwable $exception){
     dump($exception);die;
