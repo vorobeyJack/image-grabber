@@ -2,36 +2,45 @@
 
 namespace vrba\App;
 
+use vrba\App\Exception\IncorrectUrlException;
 use vrba\App\Exception\InvalidImageException;
-use vrba\App\Factory\ImageFactory;
+use vrba\App\Factory\ImageFileFactory;
 
 /**
- * Class Service
+ * Class ImageManager
  *
  * @package vrba\App
  */
-class Service
+class ImageManager
 {
-    private $content;
-    private $scheme;
-    private $host;
-    private $directoryPath;
-
-    private $imageFactory;
+    /**
+     * Parsed page content.
+     *
+     * @var string
+     */
+    private $pageContent;
 
     /**
-     * Service constructor.
+     * Image directory path.
+     *
+     * @var string
+     */
+    private $directoryPath;
+
+    /**
+     * ImageManager constructor.
      *
      * @param string $url
+     * @throws IncorrectUrlException
      */
-    public function __construct(string $url, ImageFactory $imageFactory)
+    public function __construct(string $url)
     {
-        $this->content = file_get_contents($url);
-        $this->scheme = parse_url($url, PHP_URL_SCHEME);
-        $this->host = parse_url($url, PHP_URL_HOST);
-        $this->directoryPath = $this->makeImagesDirectory();
+        if(!$this->isUrlCorrect($url)) {
+            throw new IncorrectUrlException();
+        }
 
-        $this->imageFactory = $imageFactory;
+        $this->pageContent = file_get_contents($url);
+        $this->directoryPath = $this->makeImagesDirectory();
     }
 
     /**
@@ -45,7 +54,7 @@ class Service
         $imageType = exif_imagetype($filePath);
         $imagePath = $filePath . DIRECTORY_SEPARATOR . $imageName;
 
-        $this->imageFactory->createFromArray([
+        ImageFileFactory::createFromArray([
             'path' => $imagePath,
             'type' => $imageType,
             'name' => $imageName,
@@ -70,15 +79,26 @@ class Service
     /**
      * @throws InvalidImageException
      */
-    private function parse()
+    public function parse()
     {
-        foreach ($this->content->find('img') as $img) {
+        foreach ($this->pageContent->find('img') as $img) {
             if (!$this->isImageCorrect($img)) {
                 throw new InvalidImageException();
             }
 
             $this->saveImageToLocalStorage($img->src);
         }
+    }
+
+    /**
+     * Checks url for correctly value.
+     *
+     * @param string $url
+     * @return bool
+     */
+    private function isUrlCorrect(string $url) : bool
+    {
+        return filter_var($url, FILTER_VALIDATE_URL);
     }
 
     /**

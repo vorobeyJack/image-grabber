@@ -3,11 +3,11 @@
 namespace vrba\App\Factory;
 
 /**
- * Class ImageFactory
+ * Class ImageFileFactory
  *
  * @package vrba\App\Factory
  */
-class ImageFactory
+class ImageFileFactory
 {
     /**
      * Creates image file from params array.
@@ -15,7 +15,7 @@ class ImageFactory
      * @param array $arguments
      * @return bool
      */
-    public function createFromArray(array $arguments)
+    public static function createFromArray(array $arguments)
     {
         $path = $arguments['path'];
         $type = $arguments['type'];

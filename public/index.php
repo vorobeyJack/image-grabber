@@ -2,4 +2,4 @@
 
 require '../vendor/autoload.php';
 
-$grabber = new \vrba\App\Service('http');
+$grabber = new \vrba\App\ImageManager('http');
