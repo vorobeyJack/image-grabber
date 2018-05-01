@@ -3,7 +3,6 @@
 namespace vrba\App;
 
 use vrba\App\Exception\IncorrectUrlException;
-use vrba\App\Exception\InvalidImageException;
 use vrba\App\Factory\ImageFileFactory;
 
 /**
@@ -14,11 +13,11 @@ use vrba\App\Factory\ImageFileFactory;
 class ImageManager
 {
     /**
-     * Parsed page content.
+     * DOMDocument page content
      *
-     * @var string
+     * @var bool
      */
-    private $pageContent;
+    private $domDocument;
 
     /**
      * Image directory path.
@@ -35,11 +34,11 @@ class ImageManager
      */
     public function __construct(string $url)
     {
-        if(!$this->isUrlCorrect($url)) {
+        if (!$this->isUrlCorrect($url)) {
             throw new IncorrectUrlException();
         }
 
-        $this->pageContent = file_get_contents($url);
+        $this->domDocument = $this->init($url);
         $this->directoryPath = $this->makeImagesDirectory();
     }
 
@@ -77,16 +76,18 @@ class ImageManager
     }
 
     /**
-     * @throws InvalidImageException
+     * Parse DOM images.
      */
     public function parse()
     {
-        foreach ($this->pageContent->find('img') as $img) {
-            if (!$this->isImageCorrect($img)) {
-                throw new InvalidImageException();
-            }
+        foreach ($this->domDocument->getElementsByTagName('img') as $image) {
+            foreach ($image->getAttribute('img') as $img) {
+                if (!$this->isImageCorrect($img)) {
+                    continue;
+                }
 
-            $this->saveImageToLocalStorage($img->src);
+                $this->saveImageToLocalStorage($img->src);
+            }
         }
     }
 
@@ -96,7 +97,7 @@ class ImageManager
      * @param string $url
      * @return bool
      */
-    private function isUrlCorrect(string $url) : bool
+    private function isUrlCorrect(string $url): bool
     {
         return filter_var($url, FILTER_VALIDATE_URL);
     }
@@ -123,5 +124,36 @@ class ImageManager
         $imageType = exif_imagetype($src);
 
         return !empty($src) && in_array($imageType, [IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_BMP]);
+    }
+
+    /**
+     * Init method, creating DOM document.
+     *
+     * @param string $url
+     * @return \DOMDocument
+     */
+    private function init(string $url): \DOMDocument
+    {
+        $request = curl_init();
+        curl_setopt_array($request, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADER => false,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_MAXREDIRS => 10,
+        ]);
+        $response = curl_exec($request);
+        curl_close($request);
+
+        $document = new \DOMDocument();
+
+        if ($response) {
+            libxml_use_internal_errors(true);
+            $document->loadHTML($response);
+            libxml_clear_errors();
+        }
+
+        return $document;
     }
 }
