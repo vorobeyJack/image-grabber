@@ -26,6 +26,8 @@ class ImageManager
      */
     private $directoryPath;
 
+    private $scheme;
+
     /**
      * ImageManager constructor.
      *
@@ -38,8 +40,10 @@ class ImageManager
             throw new IncorrectUrlException();
         }
 
-        $this->domDocument = $this->init($url);
         $this->directoryPath = $this->makeImagesDirectory();
+        $this->domDocument = $this->init($url);
+        $this->scheme = parse_url($url, PHP_URL_SCHEME);
+
     }
 
     /**
@@ -51,12 +55,12 @@ class ImageManager
     {
         $imageName = $this->generateImageName($filePath);
         $imageType = exif_imagetype($filePath);
-        $imagePath = $filePath . DIRECTORY_SEPARATOR . $imageName;
+        $imagePath = $this->directoryPath . DIRECTORY_SEPARATOR . $imageName;
 
         ImageFileFactory::createFromArray([
             'path' => $imagePath,
             'type' => $imageType,
-            'name' => $imageName,
+            'filePath' => $filePath
         ]);
     }
 
@@ -81,13 +85,13 @@ class ImageManager
     public function parse()
     {
         foreach ($this->domDocument->getElementsByTagName('img') as $image) {
-            foreach ($image->getAttribute('img') as $img) {
-                if (!$this->isImageCorrect($img)) {
-                    continue;
-                }
+            $imageSrc = $image->getAttribute('src');
 
-                $this->saveImageToLocalStorage($img->src);
+            if (!$this->isImageCorrect($imageSrc)) {
+                continue;
             }
+
+            $this->saveImageToLocalStorage($imageSrc);
         }
     }
 
@@ -110,7 +114,9 @@ class ImageManager
      */
     private function generateImageName(string $src): string
     {
-        return time() . '_' . pathinfo($src, PATHINFO_EXTENSION);
+        $imageNamePrefix = !empty(pathinfo($src, PATHINFO_EXTENSION)) ? pathinfo($src, PATHINFO_EXTENSION) : 'jpg';
+
+        return time() . '.' . $imageNamePrefix;
     }
 
     /**
@@ -124,6 +130,30 @@ class ImageManager
         $imageType = exif_imagetype($src);
 
         return !empty($src) && in_array($imageType, [IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_BMP]);
+    }
+
+    /**
+     * Generates absolute url
+     *
+     * @param string $src
+     * @return string
+     */
+    private function generateAbsoluteUrl(string $src) : string
+    {
+        if ($this->isUrlCorrect($src)) {
+            return $src;
+        }
+
+        if (0 === strpos($src, '//')) {
+            $resultPath = str_replace('//', $this->scheme . '://', $src);
+        }
+
+        if (0 === strpos($src, '/')) {
+            $resultPath = ltrim($src, '/');
+            $resultPath .= $this->scheme . '://';
+        }
+
+        return $resultPath;
     }
 
     /**

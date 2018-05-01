@@ -17,25 +17,27 @@ class ImageFileFactory
      */
     public static function createFromArray(array $arguments)
     {
-        $path = $arguments['path'];
+        $imagePath = $arguments['path'];
         $type = $arguments['type'];
-        $name = $arguments['name'];
-
-        $imagePath = $path . DIRECTORY_SEPARATOR . $name;
+        $filePath = $arguments['filePath'];
 
         switch ($type) {
             case IMAGETYPE_GIF:
-                $img = imageCreateFromGif($path);
-
-                return imagegif($img, $imagePath . '.gif');
+                $img = imageCreateFromGif($filePath);
+                $status = imagegif($img, $imagePath . '.gif');
+                break;
             case IMAGETYPE_JPEG:
-                $img = imageCreateFromJpeg($path);
-
-                return imagejpeg($img, $imagePath . '.jpeg');
+                $img = imageCreateFromJpeg($filePath);
+                $status = imagejpeg($img, $imagePath . '.jpeg');
+                break;
             case IMAGETYPE_PNG:
-                $img = imageCreateFromPng($path);
-
-                return imagepng($img, $imagePath . '.png');
+                $img = imageCreateFromPng($filePath);
+                $status = imagepng($img, $imagePath . '.png');
+                break;
         }
+
+        imagedestroy($img);
+
+        return $status;
     }
 }
