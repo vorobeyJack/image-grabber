@@ -1,10 +1,20 @@
 # PHP library for parsing images from sites and saving into local storage/Amazon S3
 
-1.Install
+Installation
+------------
 
+The preferred way to install this extension is through [composer](http://getcomposer.org/download/).
+
+Run
+
+```
 composer require vrba/imager-grabber
+```
 
-2.Run
+Usage
+------------
+
+```
 
 <?php
 
